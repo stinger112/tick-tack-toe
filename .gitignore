@@ -1,0 +1,6 @@
+# IntelliJ project files
+.idea
+
+# Node.js staff
+/node_modules/
+npm-debug.log
