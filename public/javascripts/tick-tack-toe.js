@@ -1,9 +1,20 @@
 'use strict';
 
+/**
+ * jQuery like selection object based on Vanilla.
+ * @param selector Any CSS selector appropriated by Vanilla
+ * @returns {Element}
+ */
 var $ = function (selector) {
   return document.querySelector(selector)
 };
 
+/**
+ * Calculate grid coordinates from real mouse position
+ * @param x Real mouse click x position
+ * @param y Real mouse click y position
+ * @returns {{x: (number|*), y: (number|*)}}
+ */
 function approximatePosition(x, y) {
   x = x / 25;
   y = y / 25;
@@ -17,6 +28,12 @@ function approximatePosition(x, y) {
   return {x: x, y: y}
 }
 
+/**
+ * Create <div> cell by tick/tack type for grid coordinates.
+ * @param x Natural coordinate x
+ * @param y Natural coordinate y
+ * @param type
+ */
 function createCell(x, y, type) {
   //TODO: Check parameters
   var cell = document.createElement('div');
@@ -29,6 +46,11 @@ function createCell(x, y, type) {
   $('div#content').appendChild(cell);
 }
 
+/**
+ * Make your move on the server.
+ * @param position Get an {x, y} position with natural coordinates
+ * @returns {{position: *}}
+ */
 function setMove(position) {
   var move = {
     position: position
@@ -39,6 +61,9 @@ function setMove(position) {
   return move;
 }
 
+/**
+ * Main entry
+ */
 document.addEventListener("DOMContentLoaded", function() {
 
   window.channel = new WebSocket("ws://localhost:3000/channel");
@@ -59,11 +84,11 @@ document.addEventListener("DOMContentLoaded", function() {
   $('div#content').addEventListener('click', function (e) {
     e.stopPropagation();
 
-    // Events not working on signed fields
+    // Events not working on filled cells
     if (e.target.className === 'tick' || e.target.className === 'tack')
       return false;
 
-    console.log('Click inside div', e);
+    //console.log('Click inside div', e);
 
     var position = approximatePosition(e.layerX, e.layerY);
 

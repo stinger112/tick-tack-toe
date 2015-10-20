@@ -30,9 +30,10 @@ app.ws('/channel', function(ws, req) {
 
       var move = JSON.parse(msg);
 
+      /** Block when we send tick/tack to the players **/
       move.type = 'tick';
 
-      move.text = 'Waiting for another player...';
+      move.text = "Waiting for another player's turn...";
       move.ready = false;
       tickClient.send(JSON.stringify(move));
 
@@ -40,12 +41,13 @@ app.ws('/channel', function(ws, req) {
       move.ready = true;
       tackClient.send(JSON.stringify(move));
 
+      // Then check winner's condition
       db.checkWinner(move, function (err, result) {
+        db.clear();
         result.ready = false;
 
         tickClient.send(JSON.stringify(result));
         tackClient.send(JSON.stringify(result));
-        //console.log('WIN WIN WIN!');
       });
     });
 
@@ -71,9 +73,10 @@ app.ws('/channel', function(ws, req) {
 
       var move = JSON.parse(msg);
 
+      /** Block when we send tick/tack to the players **/
       move.type = 'tack';
 
-      move.text = 'Waiting for another player...';
+      move.text = "Waiting for another player's turn...";
       move.ready = false;
       tackClient.send(JSON.stringify(move));
 
@@ -81,7 +84,9 @@ app.ws('/channel', function(ws, req) {
       move.ready = true;
       tickClient.send(JSON.stringify(move));
 
+      // Then check winner's condition
       db.checkWinner(move, function (err, result) {
+        db.clear();
         result.ready = false;
 
         tickClient.send(JSON.stringify(result));
@@ -96,24 +101,20 @@ app.ws('/channel', function(ws, req) {
         return (tickClient !== null) && (tackClient !== null)
       }
     }));
-
-    //var readyMessage = {
-    //  text: 'Players is ready!',
-    //  ready: true
-    //};
-    //
-    //tickClient.send(JSON.stringify(readyMessage));
-    //tackClient.send(JSON.stringify(readyMessage));
   }
 
   ws.once('close', function () {
     console.log('Player leave game. Game ended.');
 
-    tickClient = null;
-    tackClient = null;
+    db.clear();
 
-    //db.clear();
+    if (ws === tickClient)
+      tickClient = null;
+    else
+      tackClient = null;
   })
 });
 
 app.listen(3000);
+
+console.log('Application starts on localhost:3000');

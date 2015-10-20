@@ -77,8 +77,9 @@ var database = {
     });
   },
 
-  clear: function () {
-    db.close();
+  clear: function (callback) {
+    db.run("DELETE FROM Moves", callback);
+    //db.close();
   }
 };
 
