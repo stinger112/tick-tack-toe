@@ -46,9 +46,11 @@ document.addEventListener("DOMContentLoaded", function() {
   channel.onmessage = function (message) {
     var data = JSON.parse(message.data);
 
-    console.log(data);
+    //console.log(data);
 
-    //if (data.status = 'ready')
+    $('span#message').textContent = data.text;
+
+    $('div#content').className = data.ready ? '' : 'disabled';
 
     if (data.position && data.type)
       createCell(data.position.x, data.position.y, data.type);
@@ -61,7 +63,7 @@ document.addEventListener("DOMContentLoaded", function() {
     if (e.target.className === 'tick' || e.target.className === 'tack')
       return false;
 
-    //console.log('Click inside div', e);
+    console.log('Click inside div', e);
 
     var position = approximatePosition(e.layerX, e.layerY);
 

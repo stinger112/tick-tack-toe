@@ -38,7 +38,10 @@ var database = {
 
         // We found 5 signs in natural order! Win!
         if (lineCounter === 5) {
-          callback();
+          var result = {
+            text: 'User ' + move.type + ' are win!'
+          };
+          callback(null, result);
         }
       });
 
@@ -64,7 +67,10 @@ var database = {
 
         // We found 5 signs in natural order! Win!
         if (lineCounter === 5) {
-          callback();
+          var result = {
+            text: 'User ' + move.type + ' are win!'
+          };
+          callback(null, result);
         }
       });
 
