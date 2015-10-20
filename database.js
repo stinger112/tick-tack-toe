@@ -1,6 +1,6 @@
 'use strict';
 
-var bb = require('bluebird');
+//var bb = require('bluebird');
 var sqlite3 = require('sqlite3').verbose();
 
 var db = new sqlite3.Database(':memory:');
