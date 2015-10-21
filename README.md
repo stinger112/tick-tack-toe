@@ -1,7 +1,8 @@
 Project uses Express Generator 4.13.*
 
-To start application go to the project directory and promt
+To start application go to the project directory and promt:
     
     npm install
-    DEBUG=tensor npm start
+    node app
     
+App usually starts on localhost:3000, and can maintain 2 players (tick and tack).

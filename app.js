@@ -1,60 +1,120 @@
+'use strict';
+
+var db = require('./database');
 var express = require('express');
-var path = require('path');
-var favicon = require('serve-favicon');
-var logger = require('morgan');
-var cookieParser = require('cookie-parser');
-var bodyParser = require('body-parser');
-
-var routes = require('./routes/index');
-var users = require('./routes/users');
-
 var app = express();
+var expressWs = require('express-ws')(app);
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'hbs');
+app.use(express.static('public'));
 
-// uncomment after placing your favicon in /public
-//app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
-app.use(logger('dev'));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
 
-app.use('/', routes);
-app.use('/users', users);
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  var err = new Error('Not Found');
-  err.status = 404;
-  next(err);
-});
+var tickClient = null;
+var tackClient = null;
 
-// error handlers
+app.ws('/channel', function(ws, req) {
+  console.log('Connect new client');
 
-// development error handler
-// will print stacktrace
-if (app.get('env') === 'development') {
-  app.use(function(err, req, res, next) {
-    res.status(err.status || 500);
-    res.render('error', {
-      message: err.message,
-      error: err
+  if (!tickClient) {
+    tickClient = ws;
+
+    tickClient.on('message', function(msg) {
+      //console.log(msg);
+      if (!tackClient) {
+        tickClient.send(JSON.stringify({
+          text: "The second client isn't connected",
+          ready: false
+        }));
+        return console.error("The second client (tack client) isn't presented!");
+      }
+
+      var move = JSON.parse(msg);
+
+      /** Block when we send tick/tack to the players **/
+      move.type = 'tick';
+
+      move.text = "Waiting for another player's turn...";
+      move.ready = false;
+      tickClient.send(JSON.stringify(move));
+
+      move.text = 'Your turn!';
+      move.ready = true;
+      tackClient.send(JSON.stringify(move));
+
+      // Then check winner's condition
+      db.checkWinner(move, function (err, result) {
+        db.clear();
+        result.ready = false;
+
+        tickClient.send(JSON.stringify(result));
+        tackClient.send(JSON.stringify(result));
+      });
     });
-  });
-}
 
-// production error handler
-// no stacktraces leaked to user
-app.use(function(err, req, res, next) {
-  res.status(err.status || 500);
-  res.render('error', {
-    message: err.message,
-    error: {}
-  });
+
+    tickClient.send(JSON.stringify({
+      text: 'You are the tick!',
+      get ready() {
+        return (tickClient !== null) && (tackClient !== null)
+      }
+    }));
+
+  } else {
+    tackClient = ws;
+
+    tackClient.on('message', function(msg) {
+      if (!tickClient) {
+        tackClient.send(JSON.stringify({
+          text: "The second client isn't connected",
+          ready: false
+        }));
+        return console.error("The first client (tick client) isn't presented!");
+      }
+
+      var move = JSON.parse(msg);
+
+      /** Block when we send tick/tack to the players **/
+      move.type = 'tack';
+
+      move.text = "Waiting for another player's turn...";
+      move.ready = false;
+      tackClient.send(JSON.stringify(move));
+
+      move.text = 'Your turn!';
+      move.ready = true;
+      tickClient.send(JSON.stringify(move));
+
+      // Then check winner's condition
+      db.checkWinner(move, function (err, result) {
+        db.clear();
+        result.ready = false;
+
+        tickClient.send(JSON.stringify(result));
+        tackClient.send(JSON.stringify(result));
+      })
+
+    });
+
+    tackClient.send(JSON.stringify({
+      text: 'You are the tack! Your turn!',
+      get ready() {
+        return (tickClient !== null) && (tackClient !== null)
+      }
+    }));
+  }
+
+  ws.once('close', function () {
+    console.log('Player leave game. Game ended.');
+
+    db.clear();
+
+    if (ws === tickClient)
+      tickClient = null;
+    else
+      tackClient = null;
+  })
 });
 
+app.listen(3000);
 
-module.exports = app;
+console.log('Application starts on localhost:3000');
