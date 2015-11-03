@@ -65,8 +65,8 @@ function setMove(position) {
  * Main entry
  */
 document.addEventListener("DOMContentLoaded", function() {
-
-  window.channel = new WebSocket("ws://localhost:3000/channel");
+  
+  window.channel = new WebSocket("ws://" + window.location.host + "/channel");
 
   channel.onmessage = function (message) {
     var data = JSON.parse(message.data);
